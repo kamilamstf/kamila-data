@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Question 4 - a line plot using UK rain data</title>
+	<style> 
+	.d3-tip {
+        line-height: 1;
+        font-weight: bold;
+        padding: 12px;
+        background: rgba(0, 0, 0, 0.8);
+        color: #fff;
+        border-radius: 2px;
+      }
+	path {
+        stroke: steelblue;
+        stroke-width: 2;
+        fill: none;
+      }
+	.axis line {
+  	  fill: none;
+  	  stroke: grey;
+  	  stroke-width: 1;
+ 	   shape-rendering: crispEdges;
+	}
+	.axis path, .axis line {
+        	fill: none;
+        	stroke: #000;
+        	shape-rendering: crispEdges;
+     	 }
+      .datapoint:hover{
+	fill: steelblue;
+      }
+	</style>
+        <script src="http://d3js.org/d3.v3.min.js"></script>
+	<script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
+    </head>
+    <body>
+        <script type="text/javascript">
+           
+       	    
+		
+		function parser(d) {
+  		  d.pWales = +d.Wales;
+		  d.pEngland = +d.England;
+    		  d.pScotland = +d.Scotland;
+   		  d.pDate = new Date(d.Date);
+   		 return d;
+		}
+
+		var format = d3.time.format("%Y");
+
+		function rainovertime(csvdata) {
+    		var margin = {top: 30, right: 30, bottom: 75, left: 100};
+    		var width = 500 - margin.left - margin.right;
+    		var height = 400 - margin.top - margin.bottom;
+        
+//for later - to know the range of data for the axis
+   		var minDate = csvdata[0].pDate;
+    		var maxDate = csvdata[csvdata.length - 1].pDate;
+		
+	
+// Set up time based x axis
+   		var x = d3.time.scale()
+	  		  .domain([minDate, maxDate])
+	  		  .range([0, width]);
+
+   		var y = d3.scale.linear()
+	 	 	  .domain([500, 2000])
+	 	 	  .range([height, 0]);
+
+    		var xAxis = d3.svg.axis()
+	  		      .scale(x)
+	  		      .ticks(10)
+	  		      .orient("bottom");
+
+    		var yAxis = d3.svg.axis()
+	 			 .scale(y)
+	 			 .ticks(7)
+	 			 .orient("left");
+// put the graph in the "rain" div
+    var svg = d3.select("#rain").append("svg")
+	  .attr("width", width + margin.left + margin.right)
+	  .attr("height", height + margin.top + margin.bottom)
+	  .append("g")
+	  .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+		// function to draw the line
+  		var line1 = d3.svg.line()
+			.x(function(d) { return x(d.pDate); } )
+			.y(function(d) { return y(d.pWales); } );
+
+		
+		// Draw the second line (England)
+		var line2 = d3.svg.line()
+   		 	.x(function(d) { return x(d.pDate); })
+    			.y(function(d) { return y(d.pEngland); });
+		// Draw the third line (Scotland)
+		var line3 = d3.svg.line()
+   		 	.x(function(d) { return x(d.pDate); })
+    			.y(function(d) { return y(d.pScotland); });
+			
+			
+//Mouseover tip
+  		var sh1 = d3.tip()
+		.attr('class', 'd3-tip')
+		.offset([120, 40])
+		.html(function(d) {
+	    return  "Wales" + "<br>" +" year " +
+		format(d.pDate) + "<br>"+ "<strong>" + d.Wales +
+                " mm </strong><br>";
+	});
+		var sh2 = d3.tip()
+		.attr('class', 'd3-tip')
+		.offset([120, 40])
+		.html(function(d) {
+	    return  " England " + "<br>" + " year " +
+		format(d.pDate) + "<br>"+ "<strong>" + d.England +
+                " mm </strong><br>";
+	});
+		var sh3 = d3.tip()
+		.attr('class', 'd3-tip')
+		.offset([120, 40])
+		.html(function(d) {
+	    return  "Scotland" + "<br>" + " year " +
+		format(d.pDate) + "<br>"+ "<strong>" + d.Scotland +
+                " mm </strong><br>";
+	});
+
+    svg.call(sh1);
+    svg.call(sh2);
+    svg.call(sh3);
+
+// add the x axis and x-label
+    		svg.append("g")
+	 	   .attr("class", "x axis")
+	 	   .attr("transform", "translate(0," + height + ")")
+		   .call(xAxis)
+	 	   .selectAll("text")
+	 	   .attr("y", 9)
+	 	   .attr("x", 9)
+	 	   .attr("dy", ".35em")
+	 	   .attr("transform", "rotate(45)")
+	 	   .style("text-anchor", "start");
+   		 svg.append("text")
+	   	    .attr("class", "xlabel")
+	  	    .attr("text-anchor", "middle")
+	 	    .attr("x", width / 2)
+		    .attr("y", height + margin.bottom)
+		    .text("Year");
+
+// add the y axis and y-label
+    	svg.append("g")
+	   .attr("class", "y axis")
+	   .attr("transform", "translate(0,0)")
+	   .call(yAxis);
+    	svg.append("text")
+	   .attr("class", "ylabel")
+	   .attr("y", 0 - margin.left) // x and y switched due to rotation!!
+	   .attr("x", 0 - (height / 2))
+	   .attr("dy", "1em")
+	   .attr("transform", "rotate(-90)")
+	   .style("text-anchor", "middle")
+	   .text("Amount of rain, mm");
+	svg.append("text")
+	   .attr("class", "graphtitle")
+	   .attr("y", 10)
+	   .attr("x", width/2)
+	   .style("text-anchor", "middle")
+	   .text("Rain in UK");
+
+// draw the line
+    svg.append("path")
+	  .attr("d", line1(csvdata));
+    svg.append("path")
+	  .attr("d", line2(csvdata))
+	  .style("stroke", "green");
+    svg.append("path")
+	  .attr("d", line3(csvdata))
+	  .style("stroke", "red");
+
+    
+//Add dots and mouse over function to Wales line
+svg.selectAll(".dot")
+	  .data(csvdata)
+	  .enter().append("circle")
+	  .attr('class', 'datapoint')
+	  .attr('cx', function(d) { return x(d.pDate); })
+	  .attr('cy', function(d) { return y(d.pWales); })
+	  .attr('r', 2)
+	  .attr('fill', 'white')
+	  .attr('stroke', 'steelblue')
+	  .attr('stroke-width', '2')
+	  .on('mouseover', sh1.show)
+	  .on('mouseout', sh1.hide);
+
+//Add dots and mouse over function to England line
+    svg.selectAll(".dot")
+	  .data(csvdata)
+	  .enter().append("circle")
+	  .attr('class', 'datapoint')
+	  .attr('cx', function(d) { return x(d.pDate); })
+	  .attr('cy', function(d) { return y(d.pEngland); })
+	  .attr('r', 2)
+	  .attr('fill', 'white')
+	  .attr('stroke', 'green')
+	  .attr('stroke-width', '2')
+	  .on('mouseover', sh2.show)
+	  .on('mouseout', sh2.hide);
+//Add dots and mouse over function to Scotland line
+svg.selectAll(".dot")
+	  .data(csvdata)
+	  .enter().append("circle")
+	  .attr('class', 'datapoint')
+	  .attr('cx', function(d) { return x(d.pDate); })
+	  .attr('cy', function(d) { return y(d.pScotland); })
+	  .attr('r', 2)
+	  .attr('fill', 'white')
+	  .attr('stroke', 'red')
+	  .attr('stroke-width', '2')
+	  .on('mouseover', sh3.show)
+	  .on('mouseout', sh3.hide);
+	
+}
+
+// Read in .csv data and make graph
+d3.csv("UK_rain_2014.csv", parser,
+       function(error, csvdata) {
+	   rainovertime(csvdata);
+}); 
+		
+
+
+	
+
+	
+	 </script>
+	<div id="rain" class="graph"></div>
+	
+    </body>
+</html>
